@@ -87,7 +87,6 @@ public class ClockDream extends DreamService {
 
     @Override
     public void onDetachedFromWindow() {
-        dreamStartTime = 0;
         handler.removeCallbacks(tick);
         super.onDetachedFromWindow();
     }
