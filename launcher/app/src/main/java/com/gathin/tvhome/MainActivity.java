@@ -5299,13 +5299,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void checkInactivity() {
-        if (!hasWindowFocus() || isFinishing() || isDestroyed()) return;
-        long idleMs = android.os.SystemClock.elapsedRealtime() - lastUserInteraction;
-        if (idleMs >= SCREENSAVER_TIMEOUT_MS && !screensaverActive) {
-            showNightstandScreensaver();
-        } else if (screensaverActive && screensaverView != null) {
-            updateNightstandScreensaver();
-        }
+        // Automatic clock screensaver is disabled so it never covers video playback.
     }
 
     void showNightstandScreensaver() {
@@ -5404,8 +5398,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 android.provider.Settings.System.putInt(cr, "screen_off_timeout", Integer.MAX_VALUE);
                 // Disable Android TV's separate idle-sleep timer where supported by the device.
                 android.provider.Settings.Secure.putInt(cr, "sleep_timeout", -1);
-                android.provider.Settings.Secure.putInt(cr, "screensaver_enabled", 1);
-                android.provider.Settings.Secure.putString(cr, "screensaver_components", "com.gathin.tvhome/.ClockDream");
+                // Disable Android TV's system screensaver as well as the launcher's clock overlay.
+                android.provider.Settings.Secure.putInt(cr, "screensaver_enabled", 0);
+                android.provider.Settings.Secure.putString(cr, "screensaver_components", "");
 
                 // Auto-enable HomeKeyService for system actions (restart, sleep, force-stop)
                 String enabledServices = android.provider.Settings.Secure.getString(cr, android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
