@@ -4,7 +4,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.service.dreams.DreamService;
-import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -21,9 +20,7 @@ import java.util.Random;
  */
 public class ClockDream extends DreamService {
 
-    private static final String TAG = "TvHome.ClockDream";
     private static final long MOVE_MS = 60_000L;
-    private static final long DREAM_SLEEP_TIMEOUT_MS = 2L * 60 * 60 * 1000L; // 2 hours
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Random random = new Random();
@@ -34,21 +31,10 @@ public class ClockDream extends DreamService {
     private TextView hijri;
     private TextView prayer;
     private TextView hint;
-    private long dreamStartTime = 0;
 
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
-            if (dreamStartTime > 0 && android.os.SystemClock.elapsedRealtime() - dreamStartTime >= DREAM_SLEEP_TIMEOUT_MS) {
-                Log.i(TAG, "Screensaver ran for 2 hours: turning off TV display");
-                HomeKeyService.sleepScreen();
-                try {
-                    Runtime.getRuntime().exec("input keyevent 223");
-                } catch (Exception ignored) {
-                }
-                finish();
-                return;
-            }
             updateNightstand();
             moveClock();
             handler.postDelayed(this, MOVE_MS);
@@ -82,7 +68,6 @@ public class ClockDream extends DreamService {
     @Override
     public void onDreamingStarted() {
         super.onDreamingStarted();
-        dreamStartTime = android.os.SystemClock.elapsedRealtime();
         if (content != null) {
             content.setAlpha(0f);
             content.post(() -> {
@@ -96,7 +81,6 @@ public class ClockDream extends DreamService {
 
     @Override
     public void onDreamingStopped() {
-        dreamStartTime = 0;
         handler.removeCallbacks(tick);
         super.onDreamingStopped();
     }
