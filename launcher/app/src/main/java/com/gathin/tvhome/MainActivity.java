@@ -260,7 +260,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean placesMode;
     private volatile boolean placesRefreshRunning;
     private static final long SCREENSAVER_TIMEOUT_MS = 10L * 60 * 1000L; // 10 minutes idle -> screensaver
-    private static final long TV_SLEEP_TIMEOUT_MS = SCREENSAVER_TIMEOUT_MS + (2L * 60 * 60 * 1000L); // 2 hours later -> TV off
     private long lastUserInteraction = android.os.SystemClock.elapsedRealtime();
     private boolean screensaverActive = false;
     private View screensaverView;
@@ -5302,9 +5301,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void checkInactivity() {
         if (!hasWindowFocus() || isFinishing() || isDestroyed()) return;
         long idleMs = android.os.SystemClock.elapsedRealtime() - lastUserInteraction;
-        if (idleMs >= TV_SLEEP_TIMEOUT_MS) {
-            turnOffTv();
-        } else if (idleMs >= SCREENSAVER_TIMEOUT_MS && !screensaverActive) {
+        if (idleMs >= SCREENSAVER_TIMEOUT_MS && !screensaverActive) {
             showNightstandScreensaver();
         } else if (screensaverActive && screensaverView != null) {
             updateNightstandScreensaver();
@@ -5399,26 +5396,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         android.util.Log.i("TvHome", "Nightstand screensaver dismissed");
     }
 
-    private void turnOffTv() {
-        android.util.Log.i("TvHome", "TV idle: 10m screensaver + 2h timeout reached, putting TV to sleep");
-        boolean ok = HomeKeyService.sleepScreen();
-        if (!ok) {
-            try {
-                Runtime.getRuntime().exec("input keyevent 223");
-            } catch (Exception e) {
-                android.util.Log.w("TvHome", "Failed to send sleep keyevent: " + e);
-            }
-        }
-    }
-
     private void ensureSystemScreensaverAndSleepSettings() {
         new Thread(() -> {
             try {
                 android.content.ContentResolver cr = getContentResolver();
-                // 10 minutes idle -> screensaver (600,000 ms)
-                android.provider.Settings.System.putInt(cr, "screen_off_timeout", 600000);
-                // 2 hours after screensaver -> TV off (10m + 2h = 7,800,000 ms)
-                android.provider.Settings.Secure.putInt(cr, "sleep_timeout", 7800000);
+                // Keep the display timeout effectively disabled; the launcher screensaver remains active.
+                android.provider.Settings.System.putInt(cr, "screen_off_timeout", Integer.MAX_VALUE);
+                // Disable Android TV's separate idle-sleep timer where supported by the device.
+                android.provider.Settings.Secure.putInt(cr, "sleep_timeout", -1);
                 android.provider.Settings.Secure.putInt(cr, "screensaver_enabled", 1);
                 android.provider.Settings.Secure.putString(cr, "screensaver_components", "com.gathin.tvhome/.ClockDream");
 
